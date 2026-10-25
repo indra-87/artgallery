@@ -335,7 +335,9 @@ const WORKS = [
     wiki:[["en","Impression,_Sunrise"]], seen:["주황색 해","작은 배","노 젓는 사람","물에 비친 햇빛","안개","항구의 굴뚝"],
     fact:"이 그림의 제목에서 '인상주의'라는 미술의 이름이 생겨났어요." },
   { id:"bridge", title:"수련 연못 위의 다리", artist:"클로드 모네", year:"1899년", mat:"캔버스에 유화 물감", matShort:"유화 물감",
-    wiki:[["en","Bridge_over_a_Pond_of_Water_Lilies"],["en","Water_Lilies_(Monet_series)"]], seen:["둥근 다리","수련 잎","수련 꽃","연못","버드나무","풀"],
+    img:"https://commons.wikimedia.org/wiki/Special:FilePath/Bridge_Over_a_Pond_of_Water_Lilies,_Claude_Monet_1899.jpg?width=1200",
+    img2:"https://commons.wikimedia.org/wiki/Special:FilePath/The_Water-Lily_Pond_1899_Claude_Monet_Metropolitan.jpg?width=1200",
+    wiki:[], seen:["둥근 다리","수련 잎","수련 꽃","연못","버드나무","풀"],
     fact:"모네는 자기 집 정원에 연못과 다리를 직접 만들고, 그 모습을 수백 번이나 그렸어요." },
   { id:"pearl", title:"진주 귀고리를 한 소녀", artist:"요하네스 페르메이르", year:"1665년 무렵", mat:"캔버스에 유화 물감", matShort:"유화 물감",
     wiki:[["en","Girl_with_a_Pearl_Earring"]], seen:["소녀","진주 귀고리","파란 머릿수건","노란 옷","검은 배경","반짝이는 눈"],
@@ -461,7 +463,9 @@ async function loadImages() {
 function showArt(w) {
   const img = $("artImg"), ph = $("artPh"), src = images[w.id];
   if (src) {
-    img.onerror = () => { img.hidden = true; ph.hidden = false; ph.innerHTML = noImage(w); $("zoomBtn").hidden = true; };
+    img.onerror = () => {
+      if (w.img2 && img.src !== w.img2) { images[w.id] = w.img2; img.src = w.img2; return; }
+      img.hidden = true; ph.hidden = false; ph.innerHTML = noImage(w); $("zoomBtn").hidden = true; };
     img.src = src; img.alt = `${w.artist}, 「${w.title}」`; img.hidden = false; ph.hidden = true; $("zoomBtn").hidden = false;
   } else { img.hidden = true; ph.hidden = false; ph.innerHTML = noImage(w); $("zoomBtn").hidden = true; }
 }
