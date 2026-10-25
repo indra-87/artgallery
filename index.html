@@ -87,14 +87,19 @@ button { cursor: pointer; }
   box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 18px 40px -18px rgba(10,15,30,.55);
 }
 .mat {
-  background: var(--mat); padding: clamp(10px, 2.4vw, 22px);
-  display: grid; place-items: center; min-height: 300px; aspect-ratio: 4 / 3.4; max-width: 100%;
+  --pad: clamp(10px, 2.4vw, 22px);
+  position: relative; overflow: hidden; background: var(--mat); padding: var(--pad);
+  display: grid; place-items: center; width: 100%; min-height: 280px;
+  aspect-ratio: 4 / 3.4; max-height: 58vh;
 }
+/* 그림은 액자 안 공간에 맞춰 줄어듦 (세로로 긴 그림도 액자 밖으로 넘치지 않음) */
 .mat img {
-  max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block;
-  box-shadow: 0 2px 10px rgba(0,0,0,.25); transition: opacity .15s;
+  position: absolute; top: var(--pad); left: var(--pad);
+  width: calc(100% - 2 * var(--pad)); height: calc(100% - 2 * var(--pad));
+  object-fit: contain; display: block;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.28)); transition: opacity .15s;
 }
-@media (max-width: 900px) { .mat { aspect-ratio: auto; height: min(62vh, 520px); } }
+@media (max-width: 900px) { .mat { aspect-ratio: auto; height: min(56vh, 500px); max-height: none; } }
 .placeholder { text-align: center; color: var(--muted); display: grid; gap: 10px; justify-items: center; padding: 20px; }
 .placeholder a { color: var(--accent); }
 .zoom-btn {
@@ -271,7 +276,7 @@ button { cursor: pointer; }
       <h2 id="capTitle">작품 뽑는 중…</h2>
       <p id="capMeta" class="meta">&nbsp;</p>
       <div class="caption-actions">
-        <button id="copyWorkBtn" class="btn primary" type="button" disabled>📋 작품명, 화가 복사</button>
+        <button id="copyWorkBtn" class="btn primary" type="button" disabled>📋 화가, 작품명 복사</button>
         <button id="rerollBtn" class="btn" type="button" disabled>🎲 다른 작품 뽑기</button>
       </div>
       <div id="confirmBox" class="confirm" hidden>
@@ -624,11 +629,11 @@ const STEPS = [
         <li class="${kinds.size >= 2 ? "ok" : ""}">서로 다른 종류의 질문을 만들었어요 (${kinds.size}가지)</li>
         <li class="${polite ? "ok" : ""}">높임말로 쓰고 물음표(?)를 붙였어요</li></ul></div>
       <div class="next-act"><h4>활동 3: AI 작가에게 질문하러 가요</h4>
-        <ol><li>위의 <strong>작품명, 화가 복사</strong> 버튼을 눌러 아트톡에 붙여 넣어요.</li>
+        <ol><li>위의 <strong>화가, 작품명 복사</strong> 버튼을 눌러 아트톡에 붙여 넣어요.</li>
           <li>내 질문을 하나씩 <strong>질문 복사</strong>해서 AI 작가에게 물어봐요.</li>
           <li>바른 말과 높임말을 쓰고, 이름·학교 같은 개인정보는 말하지 않아요.</li>
           <li>AI의 대답이 틀릴 수도 있어요. 작품 정보와 비교해 봐요.</li></ol>
-        <div class="caption-actions"><button type="button" class="btn small" data-action="copyWork">📋 ${esc(w.title)}, ${esc(w.artist)}</button>
+        <div class="caption-actions"><button type="button" class="btn small" data-action="copyWork">📋 ${esc(w.artist)}, ${esc(w.title)}</button>
           ${ARTTALK_URL ? `<a class="btn small primary" href="${esc(ARTTALK_URL)}" target="_blank" rel="noopener">아트톡 열기 →</a>` : ""}</div></div>`;
   }
 ];
@@ -709,7 +714,7 @@ $("steps").addEventListener("click", (e) => { const b = e.target.closest("[data-
 $("prevBtn").onclick = () => state && go(state.step - 1);
 $("nextBtn").onclick = () => state && go(state.step + 1);
 
-function copyWork() { const w = work(); if (w) copyText(`${w.title}, ${w.artist}`); }
+function copyWork() { const w = work(); if (w) copyText(`${w.artist}, ${w.title}`); }
 $("copyWorkBtn").onclick = copyWork;
 $("rerollBtn").onclick = () => { if (hasProgress()) $("confirmBox").hidden = false; else roll(); };
 $("confirmYes").onclick = roll;
