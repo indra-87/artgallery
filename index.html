@@ -231,6 +231,44 @@ button { cursor: pointer; }
 }
 .next-act h4 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 21px; }
 .next-act ol { margin: 0; padding-left: 22px; display: grid; gap: 4px; }
+.chat-open { font-family: var(--f-display); font-size: 22px; min-height: 60px; justify-content: center; width: 100%; }
+
+/* AI 작가와 대화하기 */
+.chat {
+  position: fixed; inset: 0; z-index: 55; background: rgba(12,16,28,.55);
+  display: grid; place-items: center;
+  padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+}
+.chat-box {
+  width: min(760px, 100%); height: min(860px, 100%); background: var(--paper); border-radius: 20px;
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto auto; overflow: hidden;
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,.5);
+}
+.chat-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--accent); color: var(--accent-ink); }
+.chat-head img { width: 54px; height: 54px; object-fit: cover; border-radius: 10px; background: var(--mat); flex: none; }
+.chat-head .who { min-width: 0; flex: 1; }
+.chat-head strong { display: block; font-family: var(--f-display); font-weight: 400; font-size: 22px; line-height: 1.2; }
+.chat-head span { font-size: 14px; opacity: .9; }
+.chat-head button { border: 0; border-radius: 999px; padding: 8px 14px; background: rgba(255,255,255,.2); color: inherit; font-size: 15px; flex: none; }
+.chat-note { margin: 0; padding: 8px 16px; font-size: 14px; background: var(--accent-soft); color: var(--ink); }
+.chat-log { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: var(--wall); }
+.msg { max-width: 82%; padding: 10px 14px; border-radius: 16px; font-size: 17px; line-height: 1.6; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; }
+.msg.bot { align-self: flex-start; background: var(--paper); border: 1.5px solid var(--line); border-top-left-radius: 4px; }
+.msg.me { align-self: flex-end; background: var(--accent); color: var(--accent-ink); border-top-right-radius: 4px; }
+.msg.err { align-self: center; background: transparent; color: #b4372c; font-size: 15px; text-align: center; }
+.msg .name { display: block; font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+.typing { display: inline-flex; gap: 5px; padding: 4px 0; }
+.typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: blink 1.1s infinite; }
+.typing i:nth-child(2) { animation-delay: .15s; } .typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes blink { 0%, 80%, 100% { opacity: .3; } 40% { opacity: 1; } }
+.chat-qs { padding: 10px 16px 4px; display: grid; gap: 6px; border-top: 1px solid var(--line); }
+.chat-qs p { margin: 0; font-size: 14px; color: var(--muted); }
+.chat-qs .row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+.chat-qs button { flex: none; max-width: 300px; text-align: left; border: 1.5px solid var(--line); background: var(--paper); border-radius: 12px; padding: 8px 12px; font-size: 15px; line-height: 1.4; }
+.chat-qs button.asked { opacity: .5; }
+.chat-input { display: flex; gap: 8px; padding: 10px 16px 14px; align-items: flex-end; }
+.chat-input textarea { flex: 1; min-width: 0; min-height: 52px; max-height: 120px; resize: none; border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 14px; background: var(--paper); font-size: 17px; line-height: 1.4; }
+.chat-input button { min-height: 52px; }
 
 .nav { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
 
@@ -306,12 +344,31 @@ button { cursor: pointer; }
   </div>
   <div id="zoomView" class="zoom-view"><img id="zoomImg" alt="" /></div>
 </div>
+<div id="chat" class="chat" hidden role="dialog" aria-modal="true" aria-labelledby="chatWho">
+  <div class="chat-box">
+    <div class="chat-head">
+      <img id="chatImg" alt="" />
+      <div class="who"><strong id="chatWho">화가에게 질문하기</strong><span id="chatWork"></span></div>
+      <button id="chatReset" type="button">다시 시작</button>
+      <button id="chatClose" type="button">닫기</button>
+    </div>
+    <p class="chat-note">AI 작가는 진짜 화가가 아니에요. 대답이 틀릴 수도 있으니 작품 정보와 비교해 봐요. 이름·학교 같은 개인정보는 쓰지 않아요.</p>
+    <div id="chatLog" class="chat-log" aria-live="polite"></div>
+    <div class="chat-qs"><p>내가 만든 질문 (누르면 아래 칸에 들어가요)</p><div id="chatQs" class="row"></div></div>
+    <form id="chatForm" class="chat-input">
+      <label for="chatText" class="sr" hidden>질문 쓰기</label>
+      <textarea id="chatText" rows="1" maxlength="200" placeholder="화가에게 묻고 싶은 것을 써 보세요."></textarea>
+      <button id="chatSend" class="btn primary" type="submit">보내기</button>
+    </form>
+  </div>
+</div>
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script>
-/* ───────── 선생님 설정 ─────────
-   ARTTALK_URL: 활동 3에서 쓸 '우리아이 AI 아트톡' 주소를 넣으면 마지막 단계에 바로가기 버튼이 생깁니다. */
-const ARTTALK_URL = "https://wooriai.use.go.kr/start/";
+/* ───────── AI 작가 연결 (Supabase 서버 함수 → Gemini) ───────── */
+const SB_URL = "https://pqjuvuflinnrpemqcafl.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxanV2dWZsaW5ucnBlbXFjYWZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NzAzMjQsImV4cCI6MjA5NDA0NjMyNH0.E4sJv1gM9TbWG-2o90aH8wJXZMLRY_uLQ9fgWARX1Ro";
+const CHAT_URL = SB_URL + "/functions/v1/artist-chat";
 
 /* ───────── 작품 목록 ─────────
    wiki: 위키백과에서 그림을 찾을 문서 제목(앞에서부터 차례로 시도). img: 직접 이미지 주소를 넣으면 그 주소를 먼저 씁니다. */
@@ -632,13 +689,12 @@ const STEPS = [
         <li class="${filled.length >= 3 ? "ok" : ""}">질문 3개를 만들었어요 (${filled.length}/3)</li>
         <li class="${kinds.size >= 2 ? "ok" : ""}">서로 다른 종류의 질문을 만들었어요 (${kinds.size}가지)</li>
         <li class="${polite ? "ok" : ""}">높임말로 쓰고 물음표(?)를 붙였어요</li></ul></div>
-      <div class="next-act"><h4>활동 3: AI 작가에게 질문하러 가요</h4>
-        <ol><li>위의 <strong>화가, 작품명 복사</strong> 버튼을 눌러 아트톡에 붙여 넣어요.</li>
-          <li>내 질문을 하나씩 <strong>질문 복사</strong>해서 AI 작가에게 물어봐요.</li>
+      <div class="next-act"><h4>활동 3: ${esc(w.artist)} 화가에게 질문해요</h4>
+        <ol><li>아래 버튼을 눌러 AI 작가와 대화창을 열어요.</li>
+          <li>내가 만든 질문을 눌러 하나씩 물어봐요. 대답을 듣고 더 궁금한 점도 이어서 물어봐요.</li>
           <li>바른 말과 높임말을 쓰고, 이름·학교 같은 개인정보는 말하지 않아요.</li>
           <li>AI의 대답이 틀릴 수도 있어요. 작품 정보와 비교해 봐요.</li></ol>
-        <div class="caption-actions"><button type="button" class="btn small" data-action="copyWork">📋 ${esc(w.artist)}, ${esc(w.title)}</button>
-          ${ARTTALK_URL ? `<a class="btn small primary" href="${esc(ARTTALK_URL)}" target="_blank" rel="noopener">아트톡 열기 →</a>` : ""}</div></div>`;
+        <button type="button" class="btn primary chat-open" data-action="openChat">💬 ${esc(w.artist)} 화가에게 질문하기</button></div>`;
   }
 ];
 
@@ -692,6 +748,7 @@ $("stepBody").addEventListener("click", (e) => {
   const act = e.target.closest("[data-action]")?.dataset.action;
   if (act === "addSeen") addSeen();
   if (act === "copyWork") copyWork();
+  if (act === "openChat") openChat();
 });
 function addSeen() {
   const inp = $("seenCustom"); const v = inp.value.trim(); if (!v) return;
@@ -733,7 +790,79 @@ $("zoomBtn").onclick = openZoom;
 $("artImg").onclick = openZoom; $("artImg").style.cursor = "zoom-in";
 $("zoomClose").onclick = () => ($("zoom").hidden = true);
 $("zoomImg").onclick = () => $("zoomView").classList.toggle("big");
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("zoom").hidden = true; });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { $("zoom").hidden = true; closeChat(); } });
+
+/* ───────── AI 작가와 대화하기 ───────── */
+const PII = [/01[016789][-\s.]?\d{3,4}[-\s.]?\d{4}/, /\d{2,3}-\d{3,4}-\d{4}/, /[\w.+-]+@[\w-]+\.[\w.]+/,
+  /[가-힣]{2,}\s?초등학교/, /(내|제)\s?이름은/, /(우리\s?집|사는\s?곳|주소)[은는이가]?\s?[가-힣0-9]/];
+let chatBusy = false;
+const greeting = (w) => `안녕하세요! 나는 ${w.artist}예요. 정확히 말하면, ${w.artist}처럼 대답하는 AI 작가랍니다. 내 그림 「${w.title}」에 대해 궁금한 것을 물어봐 주세요.`;
+
+function openChat() {
+  const w = work(); if (!w) return;
+  if (!state.questions.some((q) => q.text.trim())) toast("질문을 먼저 만들어 두면 더 좋아요!");
+  if (!Array.isArray(state.chat) || state.chatWork !== w.id) { state.chat = [{ role: "model", text: greeting(w) }]; state.chatWork = w.id; save(); }
+  $("chatWho").textContent = `${w.artist} 화가`;
+  $("chatWork").textContent = `「${w.title}」 · ${w.year}`;
+  const img = $("chatImg");
+  if (images[w.id]) { img.src = images[w.id]; img.hidden = false; } else img.hidden = true;
+  renderChat(); renderChatQs();
+  $("chat").hidden = false;
+  setTimeout(() => $("chatText").focus(), 50);
+}
+function closeChat() { $("chat").hidden = true; }
+
+function renderChat(pending) {
+  const w = work(), log = $("chatLog");
+  log.innerHTML = state.chat.map((m) => m.role === "user"
+    ? `<div class="msg me">${esc(m.text)}</div>`
+    : m.role === "error" ? `<div class="msg err">${esc(m.text)}</div>`
+    : `<div class="msg bot"><span class="name">${esc(w.artist)}</span>${esc(m.text)}</div>`).join("") +
+    (pending ? `<div class="msg bot"><span class="name">${esc(w.artist)}</span><span class="typing"><i></i><i></i><i></i></span></div>` : "");
+  log.scrollTop = log.scrollHeight;
+}
+function renderChatQs() {
+  const asked = new Set(state.chat.filter((m) => m.role === "user").map((m) => m.text.trim()));
+  const qs = state.questions.map((q) => q.text.trim()).filter(Boolean);
+  $("chatQs").innerHTML = qs.length
+    ? qs.map((q, i) => `<button type="button" data-cq="${i}" class="${asked.has(q) ? "asked" : ""}">${i + 1}. ${esc(q)}</button>`).join("")
+    : `<p>아직 만든 질문이 없어요. 직접 써서 물어봐도 돼요.</p>`;
+}
+$("chatQs").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-cq]"); if (!b) return;
+  const qs = state.questions.map((q) => q.text.trim()).filter(Boolean);
+  $("chatText").value = qs[+b.dataset.cq] || ""; $("chatText").focus();
+});
+$("chatText").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("chatForm").requestSubmit(); }
+});
+$("chatForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (chatBusy) return;
+  const text = $("chatText").value.trim();
+  if (!text) return toast("질문을 써 주세요.");
+  if (PII.some((r) => r.test(text))) return toast("이름, 학교, 전화번호 같은 개인정보는 쓰지 않아요.");
+  state.chat = state.chat.filter((m) => m.role !== "error");
+  state.chat.push({ role: "user", text }); save();
+  $("chatText").value = ""; chatBusy = true; $("chatSend").disabled = true;
+  renderChat(true); renderChatQs();
+  try {
+    const r = await fetch(CHAT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: SB_KEY, Authorization: "Bearer " + SB_KEY },
+      body: JSON.stringify({ workId: state.workId, messages: state.chat.filter((m) => m.role !== "error").slice(-12) }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (data.reply) state.chat.push({ role: "model", text: data.reply });
+    else { state.chat.push({ role: "error", text: data.error || "대답을 받지 못했어요. 다시 보내 볼까요?" }); if (data.detail) console.warn(data.detail); }
+  } catch {
+    state.chat.push({ role: "error", text: "인터넷 연결을 확인하고 다시 보내 주세요." });
+  }
+  chatBusy = false; $("chatSend").disabled = false; save(); renderChat(); renderChatQs();
+});
+$("chatClose").onclick = closeChat;
+$("chatReset").onclick = () => { const w = work(); state.chat = [{ role: "model", text: greeting(w) }]; save(); renderChat(); renderChatQs(); };
+$("chat").addEventListener("click", (e) => { if (e.target.id === "chat") closeChat(); });
 
 /* ───────── 시작 ───────── */
 (async function start() {
